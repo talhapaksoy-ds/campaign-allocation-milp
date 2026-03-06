@@ -1,50 +1,89 @@
 # Marketing Campaign Budget Allocation under Operational Constraints (MILP)
 
-## Problem Overview
-Companies must allocate a limited marketing budget across a set of candidate campaigns. Each campaign has a cost, an expected return (ROI), a risk score, an expected reach, and a channel label (e.g., Social, Search, TV, Email). The goal is to select an optimal portfolio of campaigns that maximizes risk-adjusted return while satisfying realistic operational constraints.
+## Chosen Pathway
+**Path B – Real Optimization Problem**
 
-## Draft Mathematical Model
-**Index**
-- i = 1..n campaigns
-- k channels
+This project focuses on solving a real decision-making problem using an optimization model. The objective is to determine which marketing campaigns should be selected under limited budget and operational constraints.
 
-**Parameters**
-- Cost_i: investment cost of campaign i
-- ROI_i: expected return coefficient of campaign i
-- Risk_i: risk score of campaign i
-- Reach_i: expected reach of campaign i
-- B: total available budget
-- C_k: set of campaigns in channel k
-- L_k: maximum number of campaigns allowed in channel k
-- R_min: minimum total reach requirement
-- λ (lambda): risk penalty parameter
+---
 
-**Decision variable**
-- x_i ∈ {0,1}: 1 if campaign i is selected, 0 otherwise
+## Problem Description
 
-**Objective (risk-adjusted)**
-max  Σ(ROI_i * x_i)  -  λ Σ(Risk_i * x_i)
+Companies often run multiple marketing campaigns across channels such as social media, search advertising, email marketing, and television. Each campaign requires a certain investment and produces different levels of expected return and audience reach. Because marketing budgets are limited, managers must decide which campaigns should be selected to achieve the best overall outcome.
 
-**Constraints**
-- Budget:      Σ(Cost_i * x_i) ≤ B
-- Channel cap: Σ_{i∈C_k} x_i ≤ L_k   for all k
-- Reach:       Σ(Reach_i * x_i) ≥ R_min
-- Binary:      x_i ∈ {0,1}
+This project develops an optimization model that allocates a limited marketing budget across a set of campaigns. The model selects the combination of campaigns that maximizes expected return while satisfying constraints such as budget limits, minimum reach requirements, and channel restrictions.
 
-## Expected Method
-This project will use **Mixed Integer Linear Programming (MILP)** due to binary selection decisions with linear objective and constraints. The model will be implemented in Python and solved using a MILP solver (Gurobi or PuLP).
+---
 
-## Data Plan
-A synthetic dataset generator will be used to create realistic campaign attributes:
-- n campaigns (e.g., 30/50/80)
-- costs in a plausible range (e.g., 10k–200k)
-- ROI coefficients and risk scores with controllable distributions
-- channel labels with configurable proportions
-- reach values to support a minimum reach constraint
+## Modeling Plan
 
-If real data is later obtained, it can replace the synthetic generator without changing the model.
+The campaign selection problem will be modeled as a **Mixed Integer Linear Programming (MILP)** problem.
+
+### Decision Variable
+- x_i ∈ {0,1}  
+- x_i = 1 if campaign i is selected, otherwise 0
+
+### Objective
+Maximize the risk-adjusted return of the selected campaigns:
+
+max Σ(ROI_i * x_i) − λ Σ(Risk_i * x_i)
+
+### Key Constraints
+
+Budget constraint
+
+Σ(Cost_i * x_i) ≤ B
+
+Minimum reach constraint
+
+Σ(Reach_i * x_i) ≥ R_min
+
+Channel limit constraint
+
+Σ(i ∈ C_k) x_i ≤ L_k
+
+These constraints ensure that the selected campaign portfolio respects budget limits, achieves sufficient audience reach, and maintains a balanced distribution across marketing channels.
+
+---
+
+## Data
+
+The project uses a marketing campaign dataset containing campaign-level information such as campaign type, marketing channel, cost, and performance indicators. These variables are used to derive the model parameters including campaign cost, expected return, and reach.
+
+If necessary, additional synthetic campaign records may be generated to test the model under different experimental scenarios.
+
+---
 
 ## Repository Structure
-- `data/`: dataset files or links, and synthetic generator
-- `src/`: model, solver, and experiment scripts
-- `results/`: tables/plots/logs produced by experiments
+
+campaign-allocation-milp
+
+README.md  
+requirements.txt  
+
+data/  
+    marketing_campaign_dataset.csv  
+
+src/  
+    model.py  
+    solve.py  
+    utils.py  
+
+data/ contains the dataset used in the optimization model.  
+src/ contains the optimization model and solver scripts.
+
+---
+
+## How to Run
+
+1. Install required Python packages
+
+pip install -r requirements.txt
+
+2. Make sure the dataset is located inside the data/ folder.
+
+3. Run the solver script
+
+python src/solve.py
+
+The script will load the dataset, build the optimization model, and compute the campaign selection results.
