@@ -1,34 +1,21 @@
-from pathlib import Path
-import pandas as pd
+from preprocess import load_campaign_data
 from model import build_model
 
-def main():
-    data_path = Path(__file__).resolve().parents[1] / "data" / "marketing_campaign_dataset.csv"
 
-    data = pd.read_csv(data_path)
+# Load dataset
+data = load_campaign_data("data/marketing_campaign_dataset.csv")
 
-    budget = 100000
-    min_reach = 50000
-    risk_weight = 0.5
-    channel_limits = {
-        "Social Media": 3,
-        "Search Engine": 3,
-        "Email": 2,
-        "TV": 2
-    }
+# Use smaller sample for testing
+data = data.sample(200)
 
-    model = build_model(
-        data=data,
-        budget=budget,
-        min_reach=min_reach,
-        risk_weight=risk_weight,
-        channel_limits=channel_limits
-    )
+# Build model
+model, x = build_model(data, budget=500000, min_reach=100000)
 
-    print("Dataset loaded successfully.")
-    print(f"Number of campaigns: {len(data)}")
-    print("Model structure created (placeholder stage).")
-    print("Optimization solution will be added in the next deliverable.")
+# Solve model
+model.solve()
 
-if __name__ == "__main__":
-    main()
+print("Selected campaigns:")
+
+for i in x:
+    if x[i].value() == 1:
+        print(i)
