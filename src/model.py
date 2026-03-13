@@ -1,28 +1,25 @@
-"""
-This file will contain the MILP formulation of the campaign selection problem,
-including decision variables, objective function, and constraints.
-"""
+import pulp
 
-def build_model(data, budget, min_reach, risk_weight, channel_limits=None):
+
+def build_model(data, budget, min_reach):
     """
-    Build the optimization model.
-
-    Parameters:
-    data : pandas.DataFrame
-        Campaign-level dataset.
-    budget : float
-        Total available marketing budget.
-    min_reach : float
-        Minimum required total reach.
-    risk_weight : float
-        Weight used to penalize campaign risk in the objective function.
-    channel_limits : dict, optional
-        Maximum number of campaigns allowed for each channel.
-
-    Returns
-  
-    model : object
-        Optimization model object (sonraki aşamada uygulanacak).
+    Build MILP optimization model
     """
-    model = None
-    return model
+
+    model = pulp.LpProblem("Marketing_Campaign_Selection", pulp.LpMaximize)
+
+    campaigns = data.index
+
+    # Decision variables
+    x = pulp.LpVariable.dicts("x", campaigns, cat="Binary")
+
+    # Objective function
+    model += pulp.lpSum(data.loc[i, "roi"] * x[i] for i in campaigns)
+
+    # Budget constraint
+    model += pulp.lpSum(data.loc[i, "cost"] * x[i] for i in campaigns) <= budget
+
+    # Reach constraint
+    model += pulp.lpSum(data.loc[i, "reach"] * x[i] for i in campaigns) >= min_reach
+
+    return model, x
