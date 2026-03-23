@@ -86,6 +86,7 @@ data/
 
 src/  
     data.py  
+    how_to_run.txt
     main.py  
     model.py
     test_output
