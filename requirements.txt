@@ -1,1 +1,9 @@
+## Requirements
 
+To run this project, you need:
+
+- Python 3.x
+- Gurobi Optimizer (with a valid license)
+- gurobipy Python package
+
+Install Gurobi Python interface:
