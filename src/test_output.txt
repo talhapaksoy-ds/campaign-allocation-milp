@@ -1,0 +1,25 @@
+Test data output;
+C:\Users\lenovo\PyCharmMiscProject\.venv\Scripts\python.exe C:\Users\lenovo\Desktop\DS502-PROJECT\Tryme\main.py 
+Set parameter Username
+Set parameter LicenseID to value 2782188
+Academic license - for non-commercial use only - expires 2027-02-23
+=======================================================
+MARKETING CAMPAIGN BUDGET ALLOCATION - TEST RUN
+=======================================================
+Solver Status   : Optimal
+Objective Value : 126.20
+Selected Items  : C2, C5, C7, C8, C9, C10
+Total Cost      : 95
+Total Reach     : 715
+
+Channel Usage:
+  - Social: 2
+  - Search: 1
+  - Email: 2
+  - TV: 1
+
+Interpretation:
+The model selected the campaign portfolio that maximizes risk-adjusted return while satisfying the budget, minimum reach, and channel limit constraints.
+=======================================================
+
+Process finished with exit code 0
