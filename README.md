@@ -13,6 +13,28 @@ Companies often run multiple marketing campaigns across channels such as social 
 
 This project develops an optimization model that allocates a limited marketing budget across a set of campaigns. The model selects the combination of campaigns that maximizes expected return while satisfying constraints such as budget limits, minimum reach requirements, and channel restrictions.
 
+## Project Overview
+This project aims to optimize the allocation of a limited marketing budget across multiple campaigns. Each campaign is characterized by cost, expected return (ROI), risk, reach, and channel type.
+
+The objective is to select an optimal subset of campaigns that maximizes **risk-adjusted return** while satisfying:
+- Budget constraints
+- Minimum reach requirement
+- Channel capacity limits
+
+The problem is formulated as a **Mixed-Integer Linear Programming (MILP)** model and solved using the Gurobi optimization solver.
+
+---
+
+## Project Structure
+
+src/
+- main.py → runs the model and prints results  
+- model.py → builds and solves the optimization model  
+- data_generator.py → creates the test dataset  
+
+outputs/
+- test_output.txt → example solver output  
+
 ---
 
 ## Modeling Plan
@@ -58,32 +80,22 @@ If necessary, additional synthetic campaign records may be generated to test the
 
 campaign-allocation-milp
 
-README.md  
-requirements.txt  
-
 data/  
+    README.md
     marketing_campaign_dataset.csv  
 
 src/  
-    model.py  
-    solve.py  
-    utils.py  
+    data.py  
+    main.py  
+    model.py
+    test_output
+
+README.md  
+requirements.txt      
 
 data/ contains the dataset used in the optimization model.  
 src/ contains the optimization model and solver scripts.
 
 ---
-
-## How to Run
-
-1. Install required Python packages
-
-pip install -r requirements.txt
-
-2. Make sure the dataset is located inside the data/ folder.
-
-3. Run the solver script
-
-python src/solve.py
-
-The script will load the dataset, build the optimization model, and compute the campaign selection results.
+```bash
+pip install gurobipy
