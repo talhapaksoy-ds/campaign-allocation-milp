@@ -97,6 +97,3 @@ requirements.txt
 data/ contains the dataset used in the optimization model.  
 src/ contains the optimization model and solver scripts.
 
----
-```bash
-pip install gurobipy
