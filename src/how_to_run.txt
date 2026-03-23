@@ -1,0 +1,35 @@
+## How to Run
+
+1. Navigate to the project directory:
+```bash
+cd your_project_folder
+```
+
+2. (Optional but recommended) Create and activate a virtual environment:
+
+Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+Mac/Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install required dependencies:
+```bash
+pip install gurobipy
+```
+
+4. Run the main script:
+```bash
+python src/main.py
+```
+
+5. (Optional) Save the output to a file:
+```bash
+python src/main.py > outputs/test_output.txt
+```
