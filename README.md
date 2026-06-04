@@ -1,218 +1,373 @@
-# Marketing Campaign Budget Allocation under Operational Constraints (MILP)
-
-## Chosen Pathway
-
-Path B – Real Optimization Problem
-
-This project focuses on solving a real decision-making problem using an optimization model. The objective is to determine which marketing campaigns should be selected under limited budget and operational constraints.
-
----
-
-## Problem Description
-
-Companies often run multiple marketing campaigns across channels such as social media, search advertising, email marketing, and television. Each campaign requires a certain investment and produces different levels of expected return and audience reach. Because marketing budgets are limited, managers must decide which campaigns should be selected to achieve the best overall outcome.
-
-This project develops an optimization model that allocates a limited marketing budget across a set of campaigns. The model selects the combination of campaigns that maximizes expected return while satisfying constraints such as budget limits, minimum reach requirements, and channel restrictions.
+# House Sale Price Prediction & Affordability Dashboard
 
 ## Project Overview
 
-This project aims to optimize the allocation of a limited marketing budget across multiple campaigns. Each campaign is characterized by cost, expected return (ROI), risk, reach, and channel type.
+This project is an end-to-end data science application developed for the DS570 Final Project. It analyzes Turkish house sale listings, builds a predictive machine learning model for sale price estimation, and presents the results through an interactive Streamlit dashboard.
 
-The objective is to select an optimal subset of campaigns that maximizes risk-adjusted return while satisfying:
+The project focuses on two connected questions:
 
-- Budget constraints
-- Minimum reach requirement
-- Channel capacity limits
+1. Can house sale prices be predicted from listing-level property features such as city, district, neighborhood, area and room layout?
+2. Can the model output be used to support a simple housing affordability analysis?
 
-The problem is formulated as a Mixed-Integer Linear Programming (MILP) model and solved using the Gurobi optimization solver.
+The project is designed as a reproducible data science application rather than a static notebook. It includes data processing, exploratory visualization, predictive modeling, model evaluation, an interactive dashboard, Git-based project organization and Docker containerization.
 
 ---
 
-## Week 8 Update: MDP Interpretation
+## Problem Statement
 
-For Week 8, the original static MILP model is reinterpreted as a finite horizon Markov Decision Process (MDP). Instead of selecting all campaigns at once, the campaign allocation problem is viewed as a sequential decision process where campaigns are evaluated one by one.
+Housing prices are highly dependent on location and physical property characteristics. However, buyers often need more than raw listing prices. They need to understand whether a listed price is reasonable relative to similar listings and whether it is affordable under a chosen income scenario.
 
-At each stage, the decision maker observes the current system state and decides whether to select or skip the current campaign. The state includes:
+This project develops a dashboard that allows users to:
 
-- current campaign index,
-- remaining budget,
-- accumulated reach,
-- channel usage counts.
+- Explore housing price patterns across cities, districts and neighborhoods.
+- Compare sale prices by area and room layout.
+- Predict the expected sale price of a property.
+- Compare predicted prices with district-level medians.
+- Evaluate affordability using a simple income-based purchase budget rule.
 
-The action is binary:
+---
 
-- `1` = select the current campaign,
-- `0` = skip the current campaign.
+## Data Source
 
-The transition updates the remaining budget, accumulated reach, and channel usage after each decision. The immediate reward is defined as the campaign's risk-adjusted return:
+The project uses a processed Turkish house sale listings dataset.
+
+Expected file location:
 
 ```text
-reward = ROI - lambda * Risk
+data/processed/house_sales_cleaned_for_ds570.csv
 ```
 
-The MDP is modeled as deterministic, fully observable, finite horizon, and undiscounted in the base formulation. A future stochastic extension can model uncertain campaign reach, ROI, or conversion rate.
-
-The detailed MDP formulation is provided in:
+The dataset contains the following main fields:
 
 ```text
-mdp_notes.md
-reports/Deliverable5.pdf
+seller_type
+area_m2
+room_layout
+city
+district
+neighborhood
+listing_date
+price_try
 ```
 
----
-
-## Week 8/9 Planned Experiments
-
-The next computational stage will test how the optimization model behaves under different operational scenarios. The planned experiments include:
-
-### Parameters to Vary
-
-- Instance size: 50, 100, 250, 500, and 1000 campaigns
-- Budget level: low, medium, and high budget scenarios
-- Risk penalty parameter: lambda values such as 0, 0.25, 0.50, 1.00, and 2.00
-- Minimum reach requirement: relaxed, moderate, and strict reach targets
-- Channel capacity limits: equal channel caps and channel-specific caps
-
-### Performance Measures
-
-The following outputs will be reported:
-
-- objective value,
-- total selected campaign count,
-- total acquisition cost,
-- total reach,
-- selected channel distribution,
-- average ROI of selected campaigns,
-- average risk of selected campaigns,
-- runtime,
-- solver status,
-- feasibility rate across scenarios.
-
-### Baseline Comparisons
-
-The MILP solution will be compared against simple heuristic baselines:
-
-1. Greedy ROI baseline
-2. Greedy risk-adjusted ROI baseline
-3. Low-cost campaign selection baseline
-
-These baselines will help evaluate whether the optimization model provides better portfolio decisions than simple ranking-based selection rules.
-
----
-
-## New Assumptions Introduced by the MDP Reformulation
-
-The MDP interpretation introduces several additional assumptions:
-
-1. Campaigns are evaluated in a fixed sequence.
-2. At each stage, the decision maker knows the current campaign's cost, ROI, reach, risk, and channel.
-3. Remaining budget, accumulated reach, and channel usage are fully observable.
-4. In the base MDP, transitions are deterministic.
-5. Minimum reach is evaluated at the terminal stage through a feasibility condition or penalty.
-6. Campaign rewards are additive and do not include interaction effects between campaigns.
-
----
-
-## Project Structure
+Additional engineered fields are created during preprocessing:
 
 ```text
-campaign-allocation-milp/
-│
-├── data/
-│   └── marketing_campaign_dataset.csv
-│
-├── reports/
-│   └── Deliverable5.pdf
-│
+rooms
+living_rooms
+total_rooms
+listing_month
+listing_day
+price_per_m2
+```
+
+The dataset is based on sale listings rather than completed transaction prices. Therefore, the target variable represents asking price rather than confirmed market transaction price.
+
+---
+
+## Target Variable
+
+The machine learning target is:
+
+```text
+price_try
+```
+
+This represents the listed sale price in Turkish Lira.
+
+---
+
+## Methodology
+
+The project follows a standard end-to-end data science workflow:
+
+1. Data audit
+2. Data cleaning
+3. Feature engineering
+4. Baseline model development
+5. Machine learning model training
+6. Model evaluation
+7. Dashboard development
+8. Docker containerization
+
+---
+
+## Data Processing
+
+The preprocessing step performs the following operations:
+
+- Standardizes column names.
+- Parses room layout values such as `3+1` into numeric room variables.
+- Converts listing dates into usable date fields.
+- Creates `listing_month` and `listing_day` features.
+- Calculates `price_per_m2` for exploratory analysis.
+- Applies domain-based filtering to remove unrealistic property records.
+
+Domain-based model candidate filters:
+
+```text
+20 <= area_m2 <= 500
+500,000 <= price_try <= 50,000,000
+room layout must be parseable
+```
+
+The project intentionally excludes `price_per_m2` from model inputs because it is calculated from the target variable and would create data leakage.
+
+---
+
+## Feature Engineering
+
+The model uses the following input features:
+
+```text
+seller_type
+room_layout
+city
+district
+neighborhood
+area_m2
+rooms
+living_rooms
+total_rooms
+listing_month
+listing_day
+```
+
+Categorical features are encoded inside a scikit-learn pipeline. Numerical features are passed through the modeling pipeline without applying target-derived transformations.
+
+---
+
+## Models
+
+Two models are used:
+
+### Baseline Model
+
+```text
+City + district median price predictor
+```
+
+This baseline predicts the median training price for each city and district combination. It is a meaningful benchmark because location is one of the strongest determinants of housing prices.
+
+### Machine Learning Model
+
+```text
+RandomForestRegressor with log-transformed target
+```
+
+The target is log-transformed during training to reduce the effect of the right-skewed housing price distribution.
+
+---
+
+## Model Evaluation
+
+The model is evaluated using regression metrics:
+
+```text
+MAE
+RMSE
+R²
+MAPE
+```
+
+Current model results:
+
+| Model | MAE | RMSE | R² | MAPE |
+|---|---:|---:|---:|---:|
+| City + district median baseline | 1,343,255 TRY | 2,417,259 TRY | 0.2868 | 39.52% |
+| Random Forest with log target | 949,546 TRY | 1,968,067 TRY | 0.5272 | 25.37% |
+
+The Random Forest model reduces MAE by approximately 29.31% compared with the baseline.
+
+---
+
+## Dashboard Features
+
+The Streamlit dashboard includes six main sections:
+
+### 1. Overview
+
+- Filtered listing count
+- Median sale price
+- Median price per square meter
+- Median area
+- District-level price comparison
+- Sale price distribution
+
+### 2. Exploratory Analysis
+
+- Area vs sale price relationship
+- Median price by room layout
+- Monthly median price trend
+
+### 3. Prediction Tool
+
+Users can enter property characteristics and receive:
+
+- Predicted sale price
+- Predicted price per square meter
+- District median comparison
+- Affordability ratio
+
+### 4. Model Performance
+
+- Baseline vs ML model metrics
+- Feature importance
+- Actual vs predicted plot
+- Residual distribution
+
+### 5. Affordability Analysis
+
+Users can enter annual household income and an affordability multiplier. The dashboard compares district median prices with the estimated affordable purchase budget.
+
+### 6. Limitations
+
+The dashboard explicitly describes data and modeling limitations.
+
+---
+
+## Repository Structure
+
+```text
+.
+├── app/
+│   └── streamlit_app.py
 ├── src/
-│   ├── main.py
-│   ├── model.py
-│   ├── data_generator.py
-│   ├── mdp.py
-│   ├── dp.py
-│   └── policy_evaluation.py
-│
-├── mdp_notes.md
-├── README.md
-└── requirements.txt
+│   ├── data/
+│   │   └── preprocess.py
+│   └── models/
+│       ├── train.py
+│       └── evaluate.py
+├── data/
+│   ├── raw/
+│   └── processed/
+│       └── house_sales_cleaned_for_ds570.csv
+├── models/
+│   └── .gitkeep
+├── reports/
+│   ├── DATA_AUDIT.md
+│   ├── MODEL_REPORT.md
+│   ├── DASHBOARD_REPORT.md
+│   └── DOCKERIZATION_REPORT.md
+├── Dockerfile
+├── entrypoint.sh
+├── .dockerignore
+├── .gitignore
+├── requirements.txt
+├── Makefile
+├── DOCKER_RUN_GUIDE.md
+└── README.md
 ```
 
 ---
 
-## Modeling Plan
+## How to Run Locally
 
-The campaign selection problem is modeled as a Mixed Integer Linear Programming (MILP) problem.
-
-### Decision Variable
-
-```text
-x_i ∈ {0,1}
-```
-
-where:
-
-```text
-x_i = 1 if campaign i is selected, otherwise 0
-```
-
-### Objective
-
-Maximize the risk-adjusted return of the selected campaigns:
-
-```text
-max Σ(ROI_i * x_i) − λ Σ(Risk_i * x_i)
-```
-
-### Key Constraints
-
-Budget constraint:
-
-```text
-Σ(Cost_i * x_i) ≤ B
-```
-
-Minimum reach constraint:
-
-```text
-Σ(Reach_i * x_i) ≥ R_min
-```
-
-Channel limit constraint:
-
-```text
-Σ(i ∈ C_k) x_i ≤ L_k
-```
-
-These constraints ensure that the selected campaign portfolio respects budget limits, achieves sufficient audience reach, and maintains a balanced distribution across marketing channels.
-
----
-
-## Data
-
-The project uses a marketing campaign dataset containing campaign-level information such as campaign type, marketing channel, cost, and performance indicators. These variables are used to derive the model parameters including campaign cost, expected return, risk, and reach.
-
-If necessary, additional synthetic campaign records may be generated to test the model under different experimental scenarios.
-
----
-
-## How to Run
-
-Install the required packages:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the current optimization model:
+Run the dashboard:
 
 ```bash
-python src/main.py
+streamlit run app/streamlit_app.py
 ```
 
-Review the Week 8 MDP formulation:
+Then open:
+
+```text
+http://localhost:8501
+```
+
+If the model file is missing, the dashboard automatically runs the training script and generates the required artifacts.
+
+---
+
+## How to Run with Docker
+
+Build the Docker image:
 
 ```bash
-cat mdp_notes.md
+docker build -t ds570-house-price-dashboard .
 ```
 
-Optional draft files for future MDP and dynamic programming extensions are located in `src/mdp.py`, `src/dp.py`, and `src/policy_evaluation.py`.
+Run the container:
+
+```bash
+docker run --rm -p 8501:8501 ds570-house-price-dashboard
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+The container automatically checks for processed data and model artifacts. If the trained model is not available, it runs the training pipeline before starting the dashboard.
+
+---
+
+## Generated Artifacts
+
+The following files are generated by the model training pipeline and are not required to be stored in Git:
+
+```text
+models/house_price_model.joblib
+reports/metrics.json
+reports/feature_importance.csv
+reports/test_predictions.csv
+```
+
+Large model artifacts are excluded from version control using `.gitignore`.
+
+---
+
+## Reproducibility
+
+The project is reproducible because:
+
+- The code is organized into reusable modules.
+- Dependencies are listed in `requirements.txt`.
+- The model can be regenerated from the processed dataset.
+- Docker builds the application environment from scratch.
+- The dashboard can run without manually adding the trained model artifact.
+
+---
+
+## Limitations
+
+- The dataset contains asking prices, not finalized transaction prices.
+- The model does not currently include building age, floor level, heating type, elevator, parking or transportation proximity.
+- The affordability analysis is a simplified scenario tool and does not include mortgage rates, down payments or household debt.
+- The model is trained on national data and then filtered for Istanbul-oriented analysis, because the Istanbul subset alone is relatively small.
+- The current model does not estimate uncertainty intervals.
+
+---
+
+## Future Work
+
+Possible extensions include:
+
+- Adding mortgage payment simulation.
+- Adding interest rate and down payment assumptions.
+- Incorporating neighborhood-level socioeconomic indicators.
+- Adding geocoded map visualizations.
+- Comparing Random Forest with gradient boosting models.
+- Adding prediction intervals or quantile regression.
+- Improving temporal modeling with more historical listing data.
+
+---
+
+## Project Status
+
+```text
+Data audit: complete
+Preprocessing pipeline: complete
+Baseline model: complete
+ML model: complete
+Dashboard MVP: complete
+Dockerization: complete
+Final documentation: complete
+```
