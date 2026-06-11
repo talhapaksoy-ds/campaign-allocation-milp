@@ -1,35 +1,28 @@
-## How to Run
+HOW TO RUN THE FINAL PROJECT
 
-1. Navigate to the project directory:
-```bash
-cd your_project_folder
-```
+1. Install Python 3.10 or newer.
 
-2. (Optional but recommended) Create and activate a virtual environment:
+2. Install the required packages from the repository root:
 
-Windows:
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
+   pip install -r requirements.txt
 
-Mac/Linux:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+3. Make sure Gurobi Optimizer is installed and licensed.
 
-3. Install required dependencies:
-```bash
-pip install gurobipy
-```
+4. Put the dataset in this location:
 
-4. Run the main script:
-```bash
-python src/main.py
-```
+   data/marketing_campaign_dataset.csv
 
-5. (Optional) Save the output to a file:
-```bash
-python src/main.py > outputs/test_output.txt
-```
+5. Run the final experiment from the repository root:
+
+   python src/main.py
+
+6. The generated outputs will be saved under:
+
+   outputs/
+
+Main output files:
+   outputs/ga_milp_20run_results.csv
+   outputs/ga_milp_20run_scenario_setup.csv
+   outputs/ga_vs_milp_20run_comparison.csv
+   outputs/ga_milp_20run_method_summary.csv
+   outputs/figures/
