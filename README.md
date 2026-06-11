@@ -1,147 +1,83 @@
-# Marketing Campaign Budget Allocation under Operational Constraints (MILP)
+# Marketing Campaign Budget Allocation under Budget, Risk, Reach, and Channel Interaction Constraints
 
 ## Chosen Pathway
 
 Path B – Real Optimization Problem
 
-This project focuses on solving a real decision-making problem using an optimization model. The objective is to determine which marketing campaigns should be selected under limited budget and operatio[...]
+This project focuses on solving a real marketing decision problem using optimization and heuristic search methods. The objective is to select a subset of marketing campaigns under limited budget, minimum reach, channel capacity, risk, and channel interaction constraints.
+
+The final model combines a Genetic Algorithm, a Greedy ROI per Cost baseline, and a Linearized MILP benchmark solved with Gurobi.
 
 ---
 
 ## Problem Description
 
-Companies often run multiple marketing campaigns across channels such as social media, search advertising, email marketing, and television. Each campaign requires a certain investment and produces[...]
+Companies often run many marketing campaigns across channels such as email, search advertising, social media, websites, and video platforms. Each campaign has a cost, expected return, reach contribution, risk level, and channel type.
 
-This project develops an optimization model that allocates a limited marketing budget across a set of campaigns. The model selects the combination of campaigns that maximizes expected return while[...]
+The campaign selection problem is not only about choosing the campaigns with the highest ROI. A campaign may be costly, may fail to contribute enough reach, may increase risk, may exceed channel capacity, or may overlap with other selected campaigns. Therefore, campaign allocation is treated as a portfolio optimization problem.
+
+This project develops a campaign budget allocation model that selects a feasible campaign portfolio while maximizing risk adjusted portfolio value. The model also includes channel based synergy and cannibalization effects to represent how selected campaigns interact with one another.
+
+---
 
 ## Project Overview
 
-This project aims to optimize the allocation of a limited marketing budget across multiple campaigns. Each campaign is characterized by cost, expected return (ROI), risk, reach, and channel type.
+The objective is to select the best subset of campaigns that maximizes total portfolio value while satisfying:
 
-The objective is to select an optimal subset of campaigns that maximizes risk-adjusted return while satisfying:
+* budget constraint,
+* minimum reach requirement,
+* channel capacity limits,
+* risk penalty,
+* channel interaction effects.
 
-- Budget constraints
-- Minimum reach requirement
-- Channel capacity limits
-
-The problem is formulated as a Mixed-Integer Linear Programming (MILP) model and solved using the Gurobi optimization solver.
-
----
-
-## Week 8 Update: MDP Interpretation
-
-For Week 8, the original static MILP model is reinterpreted as a finite horizon Markov Decision Process (MDP). Instead of selecting all campaigns at once, the campaign allocation problem is viewed[...]
-
-At each stage, the decision maker observes the current system state and decides whether to select or skip the current campaign. The state includes:
-
-- current campaign index,
-- remaining budget,
-- accumulated reach,
-- channel usage counts.
-
-The action is binary:
-
-- `1` = select the current campaign,
-- `0` = skip the current campaign.
-
-The transition updates the remaining budget, accumulated reach, and channel usage after each decision. The immediate reward is defined as the campaign's risk-adjusted return:
+The model uses binary campaign selection decisions:
 
 ```text
-reward = ROI - lambda * Risk
+x_i = 1 if campaign i is selected
+x_i = 0 otherwise
 ```
 
-The MDP is modeled as deterministic, fully observable, finite horizon, and undiscounted in the base formulation. A future stochastic extension can model uncertain campaign reach, ROI, or conversio[...]
-
-The detailed MDP formulation is provided in:
+The final objective combines three components:
 
 ```text
-mdp_notes.md
-reports/Deliverable5.pdf
+portfolio value = risk adjusted campaign value + synergy value - cannibalization penalty
 ```
 
----
+The project compares three main methods:
 
-## Week 8/9 Planned Experiments
+1. Linearized MILP benchmark
+2. Genetic Algorithm
+3. Greedy ROI per Cost baseline
 
-The next computational stage will test how the optimization model behaves under different operational scenarios. The planned experiments include:
-
-### Parameters to Vary
-
-- Instance size: 50, 100, 250, 500, and 1000 campaigns
-- Budget level: low, medium, and high budget scenarios
-- Risk penalty parameter: lambda values such as 0, 0.25, 0.50, 1.00, and 2.00
-- Minimum reach requirement: relaxed, moderate, and strict reach targets
-- Channel capacity limits: equal channel caps and channel-specific caps
-
-### Performance Measures
-
-The following outputs will be reported:
-
-- objective value,
-- total selected campaign count,
-- total acquisition cost,
-- total reach,
-- selected channel distribution,
-- average ROI of selected campaigns,
-- average risk of selected campaigns,
-- runtime,
-- solver status,
-- feasibility rate across scenarios.
-
-### Baseline Comparisons
-
-The MILP solution will be compared against simple heuristic baselines:
-
-1. Greedy ROI baseline
-2. Greedy risk-adjusted ROI baseline
-3. Low-cost campaign selection baseline
-
-These baselines will help evaluate whether the optimization model provides better portfolio decisions than simple ranking-based selection rules.
+Several additional greedy and random baseline methods were also implemented as supporting checks, but Greedy ROI per Cost is used as the main representative baseline because it was the strongest simple ranking method.
 
 ---
 
-## New Assumptions Introduced by the MDP Reformulation
+## Dataset
 
-The MDP interpretation introduces several additional assumptions:
+The project uses a marketing campaign dataset containing 200,000 campaign records. The dataset includes campaign level information such as cost, channel, impressions, conversion rate, engagement score, and performance indicators.
 
-1. Campaigns are evaluated in a fixed sequence.
-2. At each stage, the decision maker knows the current campaign's cost, ROI, reach, risk, and channel.
-3. Remaining budget, accumulated reach, and channel usage are fully observable.
-4. In the base MDP, transitions are deterministic.
-5. Minimum reach is evaluated at the terminal stage through a feasibility condition or penalty.
-6. Campaign rewards are additive and do not include interaction effects between campaigns.
-
----
-
-## Project Structure
+The full dataset is sampled into smaller experimental instances to make the optimization study computationally manageable. The tested instance sizes are:
 
 ```text
-campaign-allocation-milp/
-│
-├── data/
-│   └── marketing_campaign_dataset.csv
-│
-├── reports/
-│   └── Deliverable5.pdf
-│
-├── src/
-│   ├── main.py
-│   ├── model.py
-│   ├── data_generator.py
-│   ├── mdp.py
-│   ├── dp.py
-│   └── policy_evaluation.py
-│
-├── mdp_notes.md
-├── README.md
-└── requirements.txt
+50, 100, 250, 500, and 1000 campaigns
 ```
+
+The following variables are used in the model:
+
+* Acquisition_Cost is used as campaign cost.
+* Impressions is used as the reach proxy.
+* Channel_Used is used as the campaign channel.
+* ROI is used as the expected return measure.
+* Risk is constructed as a proxy using normalized conversion rate and engagement score.
+
+The risk proxy is defined so that campaigns with lower conversion rate and lower engagement score are treated as riskier.
 
 ---
 
-## Modeling Plan
+## Mathematical Model
 
-The campaign selection problem is modeled as a Mixed Integer Linear Programming (MILP) problem.
+The campaign selection problem is formulated as a constrained binary portfolio optimization problem.
 
 ### Decision Variable
 
@@ -152,15 +88,26 @@ x_i ∈ {0,1}
 where:
 
 ```text
-x_i = 1 if campaign i is selected, otherwise 0
+x_i = 1 if campaign i is selected
+x_i = 0 otherwise
 ```
 
-### Objective
+### Base Objective
 
-Maximize the risk-adjusted return of the selected campaigns:
+The base campaign value is defined as:
 
 ```text
-max Σ(ROI_i * x_i) − λ Σ(Risk_i * x_i)
+ROI_i - λ Risk_i
+```
+
+where `λ` controls the importance of risk in the objective.
+
+### Final Objective
+
+The final portfolio objective includes risk adjusted return and channel interaction effects:
+
+```text
+maximize risk adjusted return + synergy value - cannibalization penalty
 ```
 
 ### Key Constraints
@@ -168,51 +115,248 @@ max Σ(ROI_i * x_i) − λ Σ(Risk_i * x_i)
 Budget constraint:
 
 ```text
-Σ(Cost_i * x_i) ≤ B
+Σ Cost_i x_i ≤ B
 ```
 
 Minimum reach constraint:
 
 ```text
-Σ(Reach_i * x_i) ≥ R_min
+Σ Reach_i x_i ≥ R_min
 ```
 
-Channel limit constraint:
+Channel capacity constraint:
 
 ```text
-Σ(i ∈ C_k) x_i ≤ L_k
+Σ x_i ≤ L_k for each channel k
 ```
 
-These constraints ensure that the selected campaign portfolio respects budget limits, achieves sufficient audience reach, and maintains a balanced distribution across marketing channels.
+These constraints ensure that the selected campaign portfolio respects budget limits, reaches enough audience, and avoids over selecting campaigns from the same channel.
 
 ---
 
-## Data
+## MDP Interpretation
 
-The project uses a marketing campaign dataset containing campaign-level information such as campaign type, marketing channel, cost, and performance indicators. These variables are used to derive [...]
+The campaign allocation problem is also interpreted as a finite horizon Markov Decision Process.
 
-If necessary, additional synthetic campaign records may be generated to test the model under different experimental scenarios.
+Instead of selecting all campaigns at once, the decision maker evaluates campaigns sequentially. At each stage, the decision maker chooses whether to select or skip the current campaign.
+
+The state includes:
+
+* current campaign index,
+* remaining budget,
+* accumulated reach,
+* channel usage counts.
+
+The action is binary:
+
+```text
+1 = select the current campaign
+0 = skip the current campaign
+```
+
+The transition updates the remaining budget, accumulated reach, and channel usage counts. The reward combines the campaign's risk adjusted value with channel based interaction effects.
+
+This interpretation connects the portfolio selection problem to a sequential decision structure.
 
 ---
 
-## How to Run
+## Genetic Algorithm
 
-Install the required packages:
+A Genetic Algorithm is used as the main heuristic solution method.
+
+Each chromosome is a binary vector:
+
+```text
+[x_1, x_2, ..., x_n]
+```
+
+Each gene represents whether a campaign is selected or not.
+
+The Genetic Algorithm uses:
+
+* binary chromosome encoding,
+* population based search,
+* tournament selection,
+* uniform crossover,
+* random mutation,
+* elitism,
+* repair function for budget and channel feasibility,
+* fixed random seeds for reproducibility.
+
+The repair function removes campaigns when crossover or mutation creates a solution that violates budget or channel capacity constraints.
+
+The Genetic Algorithm is useful because the number of possible campaign portfolios grows exponentially with instance size.
+
+---
+
+## Linearized MILP Benchmark
+
+A Linearized MILP benchmark is implemented to evaluate the quality of the Genetic Algorithm solutions.
+
+The original channel interaction structure includes nonlinear count based terms. To solve the problem as a MILP, the nonlinear interaction terms are linearized using:
+
+* channel count indicator variables,
+* auxiliary coupling variables,
+* linear count consistency constraints.
+
+The MILP benchmark uses the same budget, reach, channel capacity, risk adjusted return, and channel interaction structure as the Genetic Algorithm.
+
+Gurobi is used to solve the Linearized MILP model. When Gurobi reaches certified optimality, the MILP result is used as an optimal benchmark. When the solver reaches the time limit, the MILP result is interpreted as the best feasible incumbent found within the time limit.
+
+---
+
+## Experimental Design
+
+The computational study uses 20 experimental runs. The design covers:
+
+* five instance size levels,
+* different budget levels,
+* different risk penalty values,
+* relaxed, moderate, and strict reach requirements,
+* equal and specific channel capacity settings,
+* no interaction, weak interaction, strong synergy, and strong cannibalization scenarios.
+
+Runs 1 to 10 and Runs 11 to 20 follow the same scenario structure, but they use different sampled campaign subsets. This replicated design helps evaluate whether the results are consistent across different samples under the same scenario settings.
+
+The instance sizes tested are:
+
+```text
+50, 100, 250, 500, and 1000 campaigns
+```
+
+A MILP time limit of 10 seconds is used for instances up to 250 campaigns, and 20 seconds is used for larger instances.
+
+---
+
+## Main Results
+
+Across the 20 experimental runs:
+
+* Linearized MILP achieved the highest average objective value: `2232.68`
+* Genetic Algorithm achieved an average objective value of: `2108.96`
+* Greedy ROI per Cost achieved an average objective value of: `1981.20`
+
+The Linearized MILP benchmark reached certified optimality in 18 out of 20 runs. In these 18 certified optimal runs, the Genetic Algorithm achieved on average `98.56%` of the MILP optimum and matched the optimum exactly in 5 runs.
+
+The Genetic Algorithm matched or outperformed Greedy ROI per Cost in all 20 runs.
+
+The largest strong synergy scenarios were the most difficult cases for the MILP solver. Run 10 and Run 20 reached the MILP time limit, so their MILP values should be interpreted as incumbent solutions rather than certified optima.
+
+---
+
+## Output Files
+
+The experiment script exports the following result files:
+
+```text
+ga_milp_20run_results.csv
+ga_milp_20run_scenario_setup.csv
+ga_vs_milp_20run_comparison.csv
+ga_milp_20run_method_summary.csv
+```
+
+It also generates figures for objective values, runtime comparison, GA percentage of MILP benchmark, and MILP model size.
+
+---
+
+## Project Structure
+
+```text
+campaign-allocation-optimization/
+│
+├── data/
+│   └── marketing_campaign_dataset.csv
+│
+├── outputs/
+│   ├── ga_milp_20run_results.csv
+│   ├── ga_milp_20run_scenario_setup.csv
+│   ├── ga_vs_milp_20run_comparison.csv
+│   ├── ga_milp_20run_method_summary.csv
+│   └── figures/
+│
+├── reports/
+│   └── Final_Report_Marketing_Campaign_Budget_Allocation.docx
+│
+├── run_ga_milp_20run_experiments.py
+├── master_code_experiments.py
+├── README.md
+└── requirements.txt
+```
+
+---
+
+## Requirements
+
+To run this project, install the required Python packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the current optimization model:
+The project requires:
 
-```bash
-python src/main.py
+```text
+pandas
+numpy
+matplotlib
+gurobipy
 ```
 
-Review the Week 8 MDP formulation:
+The Linearized MILP benchmark also requires Gurobi Optimizer with a valid license.
+
+---
+
+## How to Run
+
+Install dependencies:
 
 ```bash
-cat mdp_notes.md
+pip install -r requirements.txt
 ```
 
-Optional draft files for future MDP and dynamic programming extensions are located in `src/mdp.py`, `src/dp.py`, and `src/policy_evaluation.py`.
+Run the main experiment script:
+
+```bash
+python run_ga_milp_20run_experiments.py
+```
+
+The script runs the 20 experimental scenarios, solves the Genetic Algorithm, Greedy ROI per Cost baseline, and Linearized MILP benchmark, then exports result tables and figures.
+
+---
+
+## Notes on Gurobi
+
+The `gurobipy` package provides the Python interface for Gurobi. However, Gurobi Optimizer must also be installed and licensed separately.
+
+To verify that Gurobi is correctly installed, run:
+
+```bash
+python -c "import gurobipy as gp; print(gp.gurobi.version())"
+```
+
+---
+
+## Limitations
+
+This project has several limitations:
+
+* Interaction coefficients are scenario based rather than estimated from historical campaign interaction data.
+* Risk is represented by a proxy using conversion and engagement metrics.
+* The model uses binary campaign selection, while real firms may allocate partial budgets.
+* The experiments use sampled instances instead of solving the full 200,000 record dataset directly.
+* The Linearized MILP model becomes more computationally demanding in large strong synergy scenarios.
+* ROI, cost, reach, and risk values are assumed to be known before optimization.
+
+---
+
+## Future Work
+
+Future work can extend this project by:
+
+* estimating channel interaction coefficients from historical campaign performance,
+* adding stochastic reach, ROI, and conversion outcomes,
+* allowing partial budget allocation,
+* testing reinforcement learning or approximate dynamic programming methods,
+* using hybrid Genetic Algorithm and MILP approaches,
+* improving scalability with parallel Genetic Algorithm implementations,
+* applying normalized or capped interaction functions for large instances.
