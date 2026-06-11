@@ -14,7 +14,7 @@ HOW TO RUN THE FINAL PROJECT
 
 5. Run the final experiment from the repository root:
 
-   python src/main.py
+   python src/mmaster_code_experiments.py
 
 6. The generated outputs will be saved under:
 
